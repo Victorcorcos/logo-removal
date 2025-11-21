@@ -19,7 +19,7 @@ Get up and running in 5 minutes!
 
 ### Step 1: Install Python Dependencies
 
-```bash
+```rb
 # Create and activate virtual environment
 python3 -m venv venv
 source venv/bin/activate  # On Linux/macOS
@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 ### Step 2: Download the Model
 
-```bash
+```rb
 python setup_models.py
 ```
 
@@ -38,7 +38,7 @@ This downloads the YOLOv11 model (~250MB) for logo detection.
 
 ### Step 3: Process Your Images
 
-```bash
+```rb
 python remove_logos.py -i /path/to/your/images
 ```
 
@@ -65,7 +65,7 @@ For detailed instructions, see the sections below.
 
 ### 1. Clone or Download This Repository
 
-```bash
+```rb
 cd /path/to/your/projects
 git clone <repository-url>
 cd logo-removal
@@ -75,7 +75,7 @@ Or simply download and extract the files to a folder.
 
 ### 2. Create a Virtual Environment (Recommended)
 
-```bash
+```rb
 # Create virtual environment
 python3 -m venv venv
 
@@ -87,7 +87,7 @@ venv\Scripts\activate  # On Windows
 
 ### 3. Install Dependencies
 
-```bash
+```rb
 # Install required packages
 pip install -r requirements.txt
 ```
@@ -96,7 +96,7 @@ pip install -r requirements.txt
 
 If you have an NVIDIA GPU and want faster processing:
 
-```bash
+```rb
 # Install PyTorch with CUDA support (adjust cu118 to your CUDA version)
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
@@ -105,7 +105,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 Run the setup script to download the pre-trained logo detection model:
 
-```bash
+```rb
 python setup_models.py
 ```
 
@@ -126,7 +126,7 @@ If the script fails, you can manually download the model:
 
 Process all images in a folder:
 
-```bash
+```rb
 python remove_logos.py -i /path/to/images/with/logos
 ```
 
@@ -137,7 +137,7 @@ This will:
 
 ### Advanced Options
 
-```bash
+```rb
 # Specify custom output directory
 python remove_logos.py -i /path/to/input -o /path/to/output
 
@@ -174,7 +174,7 @@ python remove_logos.py -i /path/to/images -v
 
 ### Example Workflow
 
-```bash
+```rb
 # 1. Activate virtual environment
 source venv/bin/activate
 
@@ -295,7 +295,7 @@ The script creates `logo_removal.log` with detailed information:
 - Processing statistics
 
 View the log:
-```bash
+```rb
 cat logo_removal.log
 # or
 tail -f logo_removal.log  # Follow in real-time
