@@ -302,7 +302,7 @@ class LogoRemover:
             logger.error(f"Error during inpainting: {e}")
             raise
 
-    def process_image(self, input_path: str, output_path: str) -> bool:
+    def process_image(self, input_path: str, output_path: str) -> str:
         """
         Process a single image: detect, mask, and remove logos.
 
@@ -311,7 +311,7 @@ class LogoRemover:
             output_path: Path to save processed image
 
         Returns:
-            True if successful, False otherwise
+            Status string: 'success' (logo detected and removed), 'no_logo' (no logo detected), or 'failed' (error occurred)
         """
         try:
             # Read the image
@@ -320,7 +320,7 @@ class LogoRemover:
 
             if image is None:
                 logger.error(f"Failed to read image: {input_path}")
-                return False
+                return 'failed'
 
             # Convert to PIL for OWLv2 check
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -331,9 +331,8 @@ class LogoRemover:
                 has_watermark = self.has_watermark_owl(pil_image)
                 if not has_watermark:
                     logger.info(f"OWLv2 classifier: No watermark detected in {input_path}")
-                    logger.info("Skipping YOLO detection and saving original image.")
-                    cv2.imwrite(output_path, image)
-                    return True
+                    logger.info("Skipping YOLO detection - image will NOT be saved to output.")
+                    return 'no_logo'
                 else:
                     logger.info("OWLv2 classifier: Watermark detected, proceeding with YOLO localization")
 
@@ -343,14 +342,12 @@ class LogoRemover:
             if len(boxes) == 0:
                 if self.owl_classifier is not None and has_watermark:
                     logger.warning(f"OWLv2 detected watermark but YOLO found no boxes in {input_path}")
-                    logger.warning("Cannot remove watermark without location - saving original image.")
+                    logger.warning("Cannot remove watermark without location - image will NOT be saved to output.")
                 else:
                     logger.warning(f"No logos detected by YOLO in {input_path}.")
-                    logger.warning("Saving original image.")
+                    logger.warning("Image will NOT be saved to output.")
 
-                # Save original image to output
-                cv2.imwrite(output_path, image)
-                return True
+                return 'no_logo'
 
             # Create mask
             mask = self.create_mask(image.shape, boxes)
@@ -362,11 +359,11 @@ class LogoRemover:
             cv2.imwrite(output_path, result)
             logger.info(f"Successfully saved to: {output_path}")
 
-            return True
+            return 'success'
 
         except Exception as e:
             logger.error(f"Failed to process {input_path}: {e}")
-            return False
+            return 'failed'
 
     def process_directory(self, input_dir: str, output_dir: str = None) -> dict:
         """
@@ -383,7 +380,7 @@ class LogoRemover:
 
         if not input_path.exists() or not input_path.is_dir():
             logger.error(f"Input directory does not exist: {input_dir}")
-            return {'success': 0, 'failed': 0, 'skipped': 0}
+            return {'success': 0, 'no_logo': 0, 'failed': 0, 'skipped': 0}
 
         # Set output directory
         if output_dir is None:
@@ -405,7 +402,7 @@ class LogoRemover:
         logger.info(f"Found {total} image(s) to process")
 
         # Process statistics
-        stats = {'success': 0, 'failed': 0, 'skipped': 0}
+        stats = {'success': 0, 'no_logo': 0, 'failed': 0, 'skipped': 0}
 
         # Process each image
         for idx, img_path in enumerate(image_files, 1):
@@ -422,20 +419,19 @@ class LogoRemover:
                 continue
 
             # Process the image
-            success = self.process_image(str(img_path), str(output_file))
+            status = self.process_image(str(img_path), str(output_file))
 
-            if success:
-                stats['success'] += 1
-            else:
-                stats['failed'] += 1
+            # Update statistics based on status
+            stats[status] += 1
 
         # Print summary
         logger.info(f"\n{'='*60}")
         logger.info("PROCESSING COMPLETE")
         logger.info(f"{'='*60}")
         logger.info(f"Total images: {total}")
-        logger.info(f"Successfully processed: {stats['success']}")
-        logger.info(f"Failed: {stats['failed']}")
+        logger.info(f"Successfully processed (logo detected & removed): {stats['success']}")
+        logger.info(f"No logo detected (not saved): {stats['no_logo']}")
+        logger.info(f"Failed (errors occurred): {stats['failed']}")
         logger.info(f"Skipped (already exists): {stats['skipped']}")
         logger.info(f"{'='*60}\n")
 
