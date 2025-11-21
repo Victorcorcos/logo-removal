@@ -1,0 +1,12 @@
+# Core dependencies for logo removal
+ultralytics>=8.0.0
+simple-lama-inpainting>=0.1.0
+opencv-python>=4.8.0
+torch>=2.0.0
+torchvision>=0.15.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Optional: For GPU acceleration (CUDA)
+# Install PyTorch with CUDA support separately if needed:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
