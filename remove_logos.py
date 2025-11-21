@@ -192,10 +192,13 @@ class LogoRemover:
         logger.debug(f"Detecting logos in {image_path}")
 
         try:
-            # Run detection
+            # Run detection with augmentation for better results
             results = self.detector.predict(
                 source=image_path,
                 conf=self.confidence_threshold,
+                imgsz=1024,
+                augment=True,
+                iou=0.5,
                 verbose=False
             )
 
@@ -319,8 +322,13 @@ class LogoRemover:
             boxes = self.detect_logos(input_path)
 
             if len(boxes) == 0:
-                logger.warning(f"No logos detected by YOLO in {input_path}. "
-                             "Saving original image.")
+                if self.owl_classifier is not None and has_watermark:
+                    logger.warning(f"OWLv2 detected watermark but YOLO found no boxes in {input_path}")
+                    logger.warning("Cannot remove watermark without location - saving original image.")
+                else:
+                    logger.warning(f"No logos detected by YOLO in {input_path}.")
+                    logger.warning("Saving original image.")
+
                 # Save original image to output
                 cv2.imwrite(output_path, image)
                 return True
