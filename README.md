@@ -202,10 +202,10 @@ logo-removal/
 ├── remove_logos.py          # Main script for logo removal
 ├── setup_models.py          # Script to download YOLO model
 ├── requirements.txt         # Python dependencies
-├── README.md               # This file
-├── models/                 # Model files (created by setup_models.py)
+├── README.md                # This file
+├── models/                  # Model files (created by setup_models.py)
 │   └── best.pt
-└── log/logo_removal.log        # Processing log (created when script runs)
+└── log/logo_removal.log     # Processing log (created when script runs)
 ```
 
 ## 🔧 How It Works
