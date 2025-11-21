@@ -115,10 +115,10 @@ This will download the YOLOv11 model (~250MB) to the `models/` directory.
 
 If the script fails, you can manually download the model:
 
-1. Visit: https://huggingface.co/foduucom/watermark-yolov11-detection
-2. Download `yolo11x-train28-best.pt`
+1. Visit: https://huggingface.co/corzent/yolo11x_watermark_detection
+2. Download `best.pt`
 3. Create a `models/` directory in the project folder
-4. Place the downloaded file in `models/yolo11x-train28-best.pt`
+4. Place the downloaded file in `models/best.pt`
 
 ## 🚀 Usage
 
@@ -166,7 +166,7 @@ python remove_logos.py -i /path/to/images -v
 |----------|-------|-------------|---------|
 | `--input` | `-i` | Input directory with images (required) | - |
 | `--output` | `-o` | Output directory for processed images | `INPUT_DIR/no_logos` |
-| `--model` | `-m` | Path to YOLO model weights | `models/yolo11x-train28-best.pt` |
+| `--model` | `-m` | Path to YOLO model weights | `models/best.pt` |
 | `--confidence` | `-c` | Detection confidence threshold (0-1) | `0.25` |
 | `--expansion` | `-e` | Mask expansion in pixels | `15` |
 | `--device` | `-d` | Device to use (auto/cpu/cuda) | `auto` |
@@ -197,7 +197,7 @@ logo-removal/
 ├── requirements.txt         # Python dependencies
 ├── README.md               # This file
 ├── models/                 # Model files (created by setup_models.py)
-│   └── yolo11x-train28-best.pt
+│   └── best.pt
 └── logo_removal.log        # Processing log (created when script runs)
 ```
 

@@ -322,8 +322,8 @@ Examples:
 
     parser.add_argument(
         '-m', '--model',
-        default='models/yolo11x-train28-best.pt',
-        help='Path to YOLO model weights file (default: models/yolo11x-train28-best.pt)'
+        default='models/best.pt',
+        help='Path to YOLO model weights file (default: models/best.pt)'
     )
 
     parser.add_argument(

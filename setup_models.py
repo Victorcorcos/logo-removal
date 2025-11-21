@@ -19,8 +19,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Model information
-DEFAULT_MODEL_URL = "https://huggingface.co/foduucom/watermark-yolov11-detection/resolve/main/yolo11x-train28-best.pt"
-DEFAULT_MODEL_NAME = "yolo11x-train28-best.pt"
+DEFAULT_MODEL_URL = "https://huggingface.co/corzent/yolo11x_watermark_detection/resolve/main/best.pt"
+DEFAULT_MODEL_NAME = "best.pt"
 MODELS_DIR = "models"
 
 
