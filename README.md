@@ -13,6 +13,46 @@ Automatically detect and remove artist watermarks/logos from images using AI-bas
 - **NSFW-Safe**: Works with all image types without content filtering
 - **Smart Masking**: Automatically expands detection regions for complete logo coverage
 
+## 🚀 Quick Start
+
+Get up and running in 5 minutes!
+
+### Step 1: Install Python Dependencies
+
+```bash
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Linux/macOS
+
+# Install packages
+pip install -r requirements.txt
+```
+
+### Step 2: Download the Model
+
+```bash
+python setup_models.py
+```
+
+This downloads the YOLOv11 model (~250MB) for logo detection.
+
+### Step 3: Process Your Images
+
+```bash
+python remove_logos.py -i /path/to/your/images
+```
+
+That's it! Your processed images will be in `/path/to/your/images/no_logos/`
+
+**Common options:**
+- Use verbose mode: `python remove_logos.py -i /path/to/images -v`
+- Lower confidence for more detections: `python remove_logos.py -i /path/to/images -c 0.15`
+- Increase mask expansion: `python remove_logos.py -i /path/to/images -e 25`
+
+For detailed instructions, see the sections below.
+
+---
+
 ## 🛠️ Prerequisites
 
 - **Operating System**: Linux (tested on Linux Mint), macOS, or Windows
