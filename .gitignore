@@ -45,7 +45,6 @@ models/*.onnx
 *.log
 
 # Output directories
-no_logos/
 output/
 results/
 
