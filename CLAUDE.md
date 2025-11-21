@@ -155,7 +155,7 @@ When making changes, verify:
 
 ```bash
 # Clean test run
-rm -rf pictures/no_logos && python remove_logos.py -i pictures -v
+rm -rf pictures/cleaned && python remove_logos.py -i pictures -v
 
 # Test with LaMa model
 python remove_logos.py -i pictures --inpaint-model lama -v
@@ -175,7 +175,7 @@ tail -50 log/logo_removal.log
 This repository is synced to Google Drive via rclone bisync (every 10 minutes). Changes will automatically sync bidirectionally.
 
 ### Committing Changes
-- Avoid committing `venv/`, `pictures/no_logos/`, `*.log`, `__pycache__/` (already in `.gitignore`)
+- Avoid committing `venv/`, `pictures/cleaned/`, `*.log`, `__pycache__/` (already in `.gitignore`)
 - Model files in `models/` should be committed (tracked for reproducibility)
 - Always test before committing changes to `remove_logos.py`
 

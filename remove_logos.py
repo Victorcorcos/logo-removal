@@ -371,7 +371,7 @@ class LogoRemover:
 
         Args:
             input_dir: Path to input directory
-            output_dir: Path to output directory (default: input_dir/no_logos)
+            output_dir: Path to output directory (default: input_dir/cleaned)
 
         Returns:
             Dictionary with processing statistics
@@ -384,7 +384,7 @@ class LogoRemover:
 
         # Set output directory
         if output_dir is None:
-            output_path = input_path / 'no_logos'
+            output_path = input_path / 'cleaned'
         else:
             output_path = Path(output_dir)
 
@@ -468,7 +468,7 @@ Examples:
     parser.add_argument(
         '-o', '--output',
         default=None,
-        help='Output directory (default: INPUT_DIR/no_logos)'
+        help='Output directory (default: INPUT_DIR/cleaned)'
     )
 
     parser.add_argument(

@@ -42,7 +42,7 @@ This downloads the YOLOv11 model (~250MB) for logo detection.
 python remove_logos.py -i /path/to/your/images
 ```
 
-That's it! Your processed images will be in `/path/to/your/images/no_logos/`
+That's it! Your processed images will be in `/path/to/your/images/cleaned/`
 
 **Common options:**
 - Use verbose mode: `python remove_logos.py -i /path/to/images -v`
@@ -134,7 +134,7 @@ python remove_logos.py -i /path/to/images/with/logos
 This will:
 - Scan `/path/to/images/with/logos` for images
 - Detect and remove logos from each image
-- Save results to `/path/to/images/with/logos/no_logos/`
+- Save results to `/path/to/images/with/logos/cleaned/`
 
 ### Advanced Options
 
@@ -171,7 +171,7 @@ python remove_logos.py -i /path/to/images -v
 | Argument | Short | Description | Default |
 |----------|-------|-------------|---------|
 | `--input` | `-i` | Input directory with images (required) | - |
-| `--output` | `-o` | Output directory for processed images | `INPUT_DIR/no_logos` |
+| `--output` | `-o` | Output directory for processed images | `INPUT_DIR/cleaned` |
 | `--model` | `-m` | Path to YOLO model weights | `models/best.pt` |
 | `--confidence` | `-c` | Detection confidence threshold (0-1) | `0.25` |
 | `--expansion` | `-e` | Mask expansion in pixels | `15` |
@@ -189,7 +189,7 @@ source venv/bin/activate
 python remove_logos.py -i ~/Pictures/anime_images
 
 # 3. Check the results
-ls ~/Pictures/anime_images/no_logos/
+ls ~/Pictures/anime_images/cleaned/
 
 # 4. View the log for any issues
 cat log/logo_removal.log

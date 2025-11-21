@@ -94,7 +94,7 @@ if [[ -n "$test_path" ]]; then
         python remove_logos.py -i "$test_path" -v
         echo ""
         echo "✓ Processing complete!"
-        echo "Check the results in: $test_path/no_logos/"
+        echo "Check the results in: $test_path/cleaned/"
     else
         echo "⚠️  Directory not found: $test_path"
     fi
