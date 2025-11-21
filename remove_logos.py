@@ -28,7 +28,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('logo_removal.log')
+        logging.FileHandler('log/logo_removal.log')
     ]
 )
 logger = logging.getLogger(__name__)

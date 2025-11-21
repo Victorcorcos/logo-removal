@@ -192,7 +192,7 @@ python remove_logos.py -i ~/Pictures/anime_images
 ls ~/Pictures/anime_images/no_logos/
 
 # 4. View the log for any issues
-cat logo_removal.log
+cat log/logo_removal.log
 ```
 
 ## 📁 Project Structure
@@ -205,7 +205,7 @@ logo-removal/
 ├── README.md               # This file
 ├── models/                 # Model files (created by setup_models.py)
 │   └── best.pt
-└── logo_removal.log        # Processing log (created when script runs)
+└── log/logo_removal.log        # Processing log (created when script runs)
 ```
 
 ## 🔧 How It Works
@@ -299,7 +299,7 @@ logo-removal/
 
 ## 📝 Logging
 
-The script creates `logo_removal.log` with detailed information:
+The script creates `log/logo_removal.log` with detailed information:
 - Which images were processed
 - Number of logos detected per image
 - Any errors or warnings
@@ -307,9 +307,9 @@ The script creates `logo_removal.log` with detailed information:
 
 View the log:
 ```rb
-cat logo_removal.log
+cat log/logo_removal.log
 # or
-tail -f logo_removal.log  # Follow in real-time
+tail -f log/logo_removal.log  # Follow in real-time
 ```
 
 ## 🎭 Contributing

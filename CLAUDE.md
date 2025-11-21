@@ -149,7 +149,7 @@ When making changes, verify:
 - [ ] Both `--inpaint-model mat` and `--inpaint-model lama` work
 - [ ] CPU fallback works when CUDA unavailable
 - [ ] Output images match input dimensions and format
-- [ ] `logo_removal.log` shows no unexpected errors
+- [ ] `log/logo_removal.log` shows no unexpected errors
 
 ## Useful Commands
 
@@ -167,7 +167,7 @@ python remove_logos.py -i pictures -d cpu -v
 ls -lh models/
 
 # View recent logs
-tail -50 logo_removal.log
+tail -50 log/logo_removal.log
 ```
 
 ## Git Workflow
