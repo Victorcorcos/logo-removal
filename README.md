@@ -5,7 +5,7 @@ Automatically detect and remove artist watermarks/logos from images using AI-bas
 ## ✨ Features
 
 - **Automatic Detection**: Uses YOLOv11 to automatically locate logos/watermarks on images
-- **AI-Powered Removal**: Employs LaMa (Large Mask Inpainting) for seamless logo removal
+- **AI-Powered Removal**: Uses IOPaint with MAT or LaMa models for seamless logo removal
 - **Batch Processing**: Process entire folders of images automatically
 - **GPU Acceleration**: Supports CUDA for faster processing (falls back to CPU if unavailable)
 - **Preserves Quality**: Maintains original image dimensions, format, and quality
@@ -46,6 +46,7 @@ That's it! Your processed images will be in `/path/to/your/images/no_logos/`
 
 **Common options:**
 - Use verbose mode: `python remove_logos.py -i /path/to/images -v`
+- Use LaMa model instead of MAT: `python remove_logos.py -i /path/to/images --inpaint-model lama`
 - Lower confidence for more detections: `python remove_logos.py -i /path/to/images -c 0.15`
 - Increase mask expansion: `python remove_logos.py -i /path/to/images -e 25`
 
@@ -153,6 +154,11 @@ python remove_logos.py -i /path/to/images -c 0.5
 # Increase if logo edges are still visible after removal
 python remove_logos.py -i /path/to/images -e 20
 
+# Choose inpainting model (mat or lama)
+# MAT: Better for large masks and anime images (default)
+# LaMa: Better for photographic images
+python remove_logos.py -i /path/to/images --inpaint-model lama
+
 # Force CPU usage (disable GPU)
 python remove_logos.py -i /path/to/images -d cpu
 
@@ -170,6 +176,7 @@ python remove_logos.py -i /path/to/images -v
 | `--confidence` | `-c` | Detection confidence threshold (0-1) | `0.25` |
 | `--expansion` | `-e` | Mask expansion in pixels | `15` |
 | `--device` | `-d` | Device to use (auto/cpu/cuda) | `auto` |
+| `--inpaint-model` | - | Inpainting model (mat/lama) | `mat` |
 | `--verbose` | `-v` | Enable verbose logging | `False` |
 
 ### Example Workflow
@@ -213,7 +220,7 @@ logo-removal/
    - White pixels (255) indicate areas to remove, black (0) is preserved
 
 3. **Inpainting Phase**
-   - LaMa inpainting model analyzes the surrounding context
+   - IOPaint inpainting model (MAT or LaMa) analyzes the surrounding context
    - Intelligently fills in the masked region
    - Seamlessly blends the inpainted area with the original image
 
@@ -264,7 +271,11 @@ logo-removal/
 
 ### Poor inpainting quality
 
-- The LaMa model works best when:
+- Try switching inpainting models:
+  - **MAT** (default): Better for anime/stylized images and large masks
+  - **LaMa**: Better for photographic/realistic images
+  - Example: `python remove_logos.py -i /path/to/images --inpaint-model lama`
+- Inpainting works best when:
   - The logo is on a relatively uniform background
   - The logo doesn't cover critical details
   - The surrounding context provides clear patterns to continue

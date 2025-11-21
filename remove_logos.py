@@ -8,12 +8,13 @@ import os
 import sys
 import argparse
 import logging
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Tuple, List, Optional
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from simple_lama_inpainting import SimpleLama
 from PIL import Image
 import torch
 import torch.nn as nn
@@ -84,7 +85,8 @@ class LogoRemover:
 
     def __init__(self, model_path: str, confidence_threshold: float = 0.25,
                  mask_expansion: int = 15, device: str = 'auto',
-                 use_owl: bool = True, owl_weights_path: str = 'models/far5y1y5-8000.pt'):
+                 use_owl: bool = True, owl_weights_path: str = 'models/far5y1y5-8000.pt',
+                 inpaint_model: str = 'mat'):
         """
         Initialize the logo remover.
 
@@ -95,11 +97,14 @@ class LogoRemover:
             device: Device to use ('auto', 'cpu', 'cuda', or specific GPU index)
             use_owl: Whether to use OWLv2 classifier for enhanced detection
             owl_weights_path: Path to OWLv2 classifier weights
+            inpaint_model: Inpainting model to use ('mat' for anime, 'lama' for photos)
         """
         self.confidence_threshold = confidence_threshold
         self.mask_expansion = mask_expansion
         self.use_owl = use_owl
         self.owl_classifier = None
+        self.inpaint_model = inpaint_model
+        self.device = device
 
         # Initialize OWLv2 classifier if enabled
         if self.use_owl and os.path.exists(owl_weights_path):
@@ -123,14 +128,8 @@ class LogoRemover:
             logger.error(f"Failed to load YOLO model: {e}")
             raise
 
-        # Initialize LaMa inpainting model
-        logger.info("Loading LaMa inpainting model...")
-        try:
-            self.inpainter = SimpleLama()
-            logger.info("LaMa model loaded successfully")
-        except Exception as e:
-            logger.error(f"Failed to load LaMa model: {e}")
-            raise
+        # IOPaint inpainting (MAT or LaMa) - no pre-loading needed
+        logger.info(f"Using IOPaint with {self.inpaint_model.upper()} model for inpainting")
 
         # Supported image formats
         self.supported_formats = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
@@ -250,7 +249,7 @@ class LogoRemover:
 
     def inpaint_image(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
         """
-        Remove logo using LaMa inpainting.
+        Remove logo using IOPaint (MAT or LaMa).
 
         Args:
             image: Input image as numpy array (BGR format from OpenCV)
@@ -259,26 +258,46 @@ class LogoRemover:
         Returns:
             Inpainted image as numpy array
         """
-        logger.debug("Starting inpainting process")
+        logger.debug(f"Starting inpainting process with {self.inpaint_model.upper()} model")
 
         try:
-            # Convert BGR to RGB for LaMa
-            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # Create temporary files for input/output
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_image_path = os.path.join(tmpdir, 'input.png')
+                tmp_mask_path = os.path.join(tmpdir, 'mask.png')
+                tmp_output_dir = os.path.join(tmpdir, 'output')
 
-            # Convert to PIL Image for LaMa
-            pil_image = Image.fromarray(image_rgb)
-            pil_mask = Image.fromarray(mask)
+                # Save image and mask
+                cv2.imwrite(tmp_image_path, image)
+                cv2.imwrite(tmp_mask_path, mask)
 
-            # Perform inpainting
-            result = self.inpainter(pil_image, pil_mask)
+                # Run IOPaint command
+                device_param = 'cuda' if self.device != 'cpu' and torch.cuda.is_available() else 'cpu'
+                cmd = [
+                    'iopaint', 'run',
+                    '--model', self.inpaint_model,
+                    '--device', device_param,
+                    '--image', tmp_image_path,
+                    '--mask', tmp_mask_path,
+                    '--output', tmp_output_dir
+                ]
 
-            # Convert back to numpy array and BGR
-            result_array = np.array(result)
-            result_bgr = cv2.cvtColor(result_array, cv2.COLOR_RGB2BGR)
+                logger.debug(f"Running IOPaint: {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
-            logger.debug("Inpainting completed successfully")
-            return result_bgr
+                # IOPaint creates a subdirectory and saves output with same name as input
+                result_image_path = os.path.join(tmp_output_dir, 'input.png')
+                result_image = cv2.imread(result_image_path)
 
+                if result_image is None:
+                    raise Exception("IOPaint failed to generate output")
+
+                logger.debug("Inpainting completed successfully")
+                return result_image
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"IOPaint command failed: {e.stderr}")
+            raise
         except Exception as e:
             logger.error(f"Error during inpainting: {e}")
             raise
@@ -488,6 +507,13 @@ Examples:
         help='Enable verbose logging'
     )
 
+    parser.add_argument(
+        '--inpaint-model',
+        default='mat',
+        choices=['mat', 'lama'],
+        help='Inpainting model: mat (better for anime) or lama (better for photos, default: mat)'
+    )
+
     args = parser.parse_args()
 
     # Set logging level
@@ -506,7 +532,8 @@ Examples:
             model_path=args.model,
             confidence_threshold=args.confidence,
             mask_expansion=args.expansion,
-            device=args.device
+            device=args.device,
+            inpaint_model=args.inpaint_model
         )
 
         # Process directory
