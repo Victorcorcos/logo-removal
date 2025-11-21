@@ -15,6 +15,11 @@ import numpy as np
 from ultralytics import YOLO
 from simple_lama_inpainting import SimpleLama
 from PIL import Image
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.transforms.functional as TVF
+from transformers import Owlv2VisionModel
 
 # Configure logging
 logging.basicConfig(
@@ -28,11 +33,58 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class DetectorModelOwl(nn.Module):
+    """OWLv2-based watermark classifier for enhanced detection."""
+
+    def __init__(self, model_path: str, dropout: float, n_hidden: int = 768):
+        super().__init__()
+
+        owl = Owlv2VisionModel.from_pretrained(model_path)
+        assert isinstance(owl, Owlv2VisionModel)
+        self.owl = owl
+        self.owl.requires_grad_(False)
+
+        self.dropout1 = nn.Dropout(dropout)
+        self.ln1 = nn.LayerNorm(n_hidden, eps=1e-5)
+        self.linear1 = nn.Linear(n_hidden, n_hidden * 2)
+        self.act1 = nn.GELU()
+        self.dropout2 = nn.Dropout(dropout)
+        self.ln2 = nn.LayerNorm(n_hidden * 2, eps=1e-5)
+        self.linear2 = nn.Linear(n_hidden * 2, 2)
+
+    def forward(self, pixel_values: torch.Tensor, labels: torch.Tensor | None = None):
+        with torch.autocast("cpu", dtype=torch.bfloat16):
+            # Embed the image
+            outputs = self.owl(pixel_values=pixel_values, output_hidden_states=True)
+            x = outputs.last_hidden_state  # B, N, C
+
+            # Linear
+            x = self.dropout1(x)
+            x = self.ln1(x)
+            x = self.linear1(x)
+            x = self.act1(x)
+
+            # Norm and Mean
+            x = self.dropout2(x)
+            x, _ = x.max(dim=1)
+            x = self.ln2(x)
+
+            # Linear
+            x = self.linear2(x)
+
+        if labels is not None:
+            loss = F.cross_entropy(x, labels)
+            return (x, loss)
+
+        return (x,)
+
+
 class LogoRemover:
     """Main class for detecting and removing logos from images."""
 
     def __init__(self, model_path: str, confidence_threshold: float = 0.25,
-                 mask_expansion: int = 15, device: str = 'auto'):
+                 mask_expansion: int = 15, device: str = 'auto',
+                 use_owl: bool = True, owl_weights_path: str = 'models/far5y1y5-8000.pt'):
         """
         Initialize the logo remover.
 
@@ -41,9 +93,26 @@ class LogoRemover:
             confidence_threshold: Minimum confidence for logo detection (0-1)
             mask_expansion: Pixels to expand the mask on each side
             device: Device to use ('auto', 'cpu', 'cuda', or specific GPU index)
+            use_owl: Whether to use OWLv2 classifier for enhanced detection
+            owl_weights_path: Path to OWLv2 classifier weights
         """
         self.confidence_threshold = confidence_threshold
         self.mask_expansion = mask_expansion
+        self.use_owl = use_owl
+        self.owl_classifier = None
+
+        # Initialize OWLv2 classifier if enabled
+        if self.use_owl and os.path.exists(owl_weights_path):
+            logger.info("Loading OWLv2 watermark classifier...")
+            try:
+                self.owl_classifier = DetectorModelOwl("google/owlv2-base-patch16-ensemble", dropout=0.0)
+                self.owl_classifier.load_state_dict(torch.load(owl_weights_path, map_location="cpu"))
+                self.owl_classifier.eval()
+                logger.info("OWLv2 classifier loaded successfully")
+            except Exception as e:
+                logger.warning(f"Failed to load OWLv2 classifier: {e}")
+                logger.warning("Continuing with YOLO detection only")
+                self.owl_classifier = None
 
         # Initialize YOLO detector
         logger.info(f"Loading YOLO model from {model_path}...")
@@ -65,6 +134,50 @@ class LogoRemover:
 
         # Supported image formats
         self.supported_formats = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+
+    def has_watermark_owl(self, image: Image.Image) -> bool:
+        """
+        Check if image has a watermark using OWLv2 classifier.
+
+        Args:
+            image: PIL Image
+
+        Returns:
+            True if watermark detected, False otherwise
+        """
+        if self.owl_classifier is None:
+            return False
+
+        try:
+            # Pad to square
+            big_side = max(image.size)
+            new_image = Image.new("RGB", (big_side, big_side), (128, 128, 128))
+            new_image.paste(image, (0, 0))
+
+            # Resize to 960x960
+            preped = new_image.resize((960, 960), Image.BICUBIC)
+
+            # Convert to tensor and normalize
+            preped = TVF.pil_to_tensor(preped)
+            preped = preped / 255.0
+            input_image = TVF.normalize(preped, [0.48145466, 0.4578275, 0.40821073],
+                                       [0.26862954, 0.26130258, 0.27577711])
+
+            # Run prediction
+            with torch.no_grad():
+                logits, = self.owl_classifier(input_image.unsqueeze(0), None)
+                probs = F.softmax(logits, dim=1)
+                prediction = torch.argmax(probs.cpu(), dim=1)
+
+            has_watermark = prediction.item() == 1
+            confidence = probs[0][1].item()
+
+            logger.debug(f"OWLv2 watermark prediction: {has_watermark} (confidence: {confidence:.2f})")
+            return has_watermark
+
+        except Exception as e:
+            logger.warning(f"OWLv2 prediction failed: {e}")
+            return False
 
     def detect_logos(self, image_path: str) -> List[Tuple[int, int, int, int]]:
         """
@@ -187,11 +300,26 @@ class LogoRemover:
                 logger.error(f"Failed to read image: {input_path}")
                 return False
 
-            # Detect logos
+            # Convert to PIL for OWLv2 check
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(image_rgb)
+
+            # Use OWLv2 to pre-check for watermarks if available
+            if self.owl_classifier is not None:
+                has_watermark = self.has_watermark_owl(pil_image)
+                if not has_watermark:
+                    logger.info(f"OWLv2 classifier: No watermark detected in {input_path}")
+                    logger.info("Skipping YOLO detection and saving original image.")
+                    cv2.imwrite(output_path, image)
+                    return True
+                else:
+                    logger.info("OWLv2 classifier: Watermark detected, proceeding with YOLO localization")
+
+            # Detect logos with YOLO
             boxes = self.detect_logos(input_path)
 
             if len(boxes) == 0:
-                logger.warning(f"No logos detected in {input_path}. "
+                logger.warning(f"No logos detected by YOLO in {input_path}. "
                              "Saving original image.")
                 # Save original image to output
                 cv2.imwrite(output_path, image)
