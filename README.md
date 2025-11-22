@@ -12,7 +12,6 @@ Automatically detect and remove artist watermarks/logos from images using AI-bas
 - **GPU Acceleration**: Supports CUDA for faster processing (falls back to CPU if unavailable)
 - **Preserves Quality**: Maintains original image dimensions, format, and quality
 - **Offline & Free**: Uses open-source models, no API keys or internet required (after setup)
-- **NSFW-Safe**: Works with all image types without content filtering
 - **Smart Masking**: Automatically expands detection regions for complete logo coverage
 
 ## 🚀 Quick Start
@@ -296,7 +295,6 @@ logo-removal/
 
 - **Fully Offline**: After initial model download, no internet required
 - **No Telemetry**: No data is sent anywhere
-- **NSFW-Safe**: No content filtering or external API calls
 - **Local Processing**: All processing happens on your machine
 
 ## 📝 Logging
@@ -388,3 +386,19 @@ For questions, issues, or suggestions:
 ---
 
 **Happy Logo Removing!** 🎨✨
+
+---
+
+## ⚖️ Legal Disclaimer
+
+This tool is provided for educational and research purposes only. The user assumes all responsibility for its use. This project is not intended to support, encourage, or facilitate the removal of official trademarks, copyrights, or other intellectual property from images for purposes of piracy, infringement, or any other illegal activities.
+
+By using this software, you acknowledge and agree that:
+- You will comply with all applicable local, national, and international laws and regulations.
+- You will not use this tool to infringe upon the rights of any third party, including intellectual property rights.
+- You are solely responsible for ensuring that your use of this tool is lawful and does not violate any terms of service or intellectual property rights.
+
+The creators and contributors of this repository disclaim any and all liability for any misuse of this software and for any direct, indirect, incidental, special, exemplary, or consequential damages arising out of or in connection with the use of this tool.
+
+---
+
