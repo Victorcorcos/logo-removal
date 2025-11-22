@@ -14,7 +14,7 @@ Automatically detect and remove artist watermarks/logos from images using AI-bas
 - **Offline & Free**: Uses open-source models, no API keys or internet required (after setup)
 - **Smart Masking**: Automatically expands detection regions for complete logo coverage
 
-## 🚀 Quick Start
+## 👣 Quick Start
 
 Get up and running in 5 minutes!
 
