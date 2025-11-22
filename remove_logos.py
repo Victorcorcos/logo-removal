@@ -19,13 +19,21 @@ import torch
 
 from logo_detector import LogoDetector
 
+# Base paths (script-location aware)
+BASE_DIR = Path(__file__).resolve().parent
+LOG_DIR = BASE_DIR / 'log'
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+DEFAULT_LOG_PATH = LOG_DIR / 'logo_removal.log'
+DEFAULT_MODEL_PATH = BASE_DIR / 'models' / 'best.pt'
+DEFAULT_OWL_WEIGHTS_PATH = BASE_DIR / 'models' / 'far5y1y5-8000.pt'
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('log/logo_removal.log')
+        logging.FileHandler(str(DEFAULT_LOG_PATH))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -36,7 +44,7 @@ class LogoRemover:
 
     def __init__(self, model_path: str, confidence_threshold: float = 0.15,
                  mask_expansion: int = 15, device: str = 'auto',
-                 use_owl: bool = True, owl_weights_path: str = 'models/far5y1y5-8000.pt',
+                 use_owl: bool = True, owl_weights_path: str = str(DEFAULT_OWL_WEIGHTS_PATH),
                  owl_threshold: float = 0.40, inpaint_model: str = 'mat'):
         """
         Initialize the logo remover.
@@ -51,16 +59,24 @@ class LogoRemover:
             owl_threshold: Threshold for OWLv2 watermark classification (0-1)
             inpaint_model: Inpainting model to use ('mat' for anime, 'lama' for photos)
         """
+        self.model_path = Path(model_path).expanduser()
+        if not self.model_path.is_absolute():
+            self.model_path = (Path.cwd() / self.model_path).resolve()
+
+        self.owl_weights_path = Path(owl_weights_path).expanduser()
+        if not self.owl_weights_path.is_absolute():
+            self.owl_weights_path = (Path.cwd() / self.owl_weights_path).resolve()
+
         self.mask_expansion = mask_expansion
         self.inpaint_model = inpaint_model
         self.device = device
 
         # Initialize logo detector
         self.detector = LogoDetector(
-            yolo_model_path=model_path,
+            yolo_model_path=str(self.model_path),
             confidence_threshold=confidence_threshold,
             use_owl=use_owl,
-            owl_weights_path=owl_weights_path,
+            owl_weights_path=str(self.owl_weights_path),
             owl_threshold=owl_threshold
         )
 
@@ -325,8 +341,8 @@ Examples:
 
     parser.add_argument(
         '-m', '--model',
-        default='models/best.pt',
-        help='Path to YOLO model weights file (default: models/best.pt)'
+        default=str(DEFAULT_MODEL_PATH),
+        help=f'Path to YOLO model weights file (default: {DEFAULT_MODEL_PATH})'
     )
 
     parser.add_argument(
@@ -375,16 +391,20 @@ Examples:
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
+    model_path = Path(args.model).expanduser()
+    if not model_path.is_absolute():
+        model_path = (Path.cwd() / model_path).resolve()
+
     # Check if model file exists
-    if not os.path.exists(args.model):
-        logger.error(f"Model file not found: {args.model}")
+    if not model_path.exists():
+        logger.error(f"Model file not found: {model_path}")
         logger.error("Please download the model first. See README.md for instructions.")
         sys.exit(1)
 
     try:
         # Initialize remover
         remover = LogoRemover(
-            model_path=args.model,
+            model_path=str(model_path),
             confidence_threshold=args.confidence,
             mask_expansion=args.expansion,
             device=args.device,

@@ -7,6 +7,7 @@ Handles all logo/watermark detection logic using YOLO and OWLv2.
 import os
 import tempfile
 import logging
+from pathlib import Path
 from typing import List, Tuple
 import cv2
 import numpy as np
@@ -19,6 +20,8 @@ from transformers import Owlv2VisionModel
 from ultralytics import YOLO
 
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_OWL_WEIGHTS_PATH = BASE_DIR / 'models' / 'far5y1y5-8000.pt'
 
 
 class DetectorModelOwl(nn.Module):
@@ -71,7 +74,7 @@ class LogoDetector:
     """Handles logo detection using YOLO with optional OWLv2 pre-classification."""
 
     def __init__(self, yolo_model_path: str, confidence_threshold: float = 0.15,
-                 use_owl: bool = True, owl_weights_path: str = 'models/far5y1y5-8000.pt',
+                 use_owl: bool = True, owl_weights_path: str | Path | None = None,
                  owl_threshold: float = 0.40):
         """
         Initialize the logo detector.
@@ -88,12 +91,25 @@ class LogoDetector:
         self.owl_threshold = owl_threshold
         self.owl_classifier = None
 
+        model_path_resolved = Path(yolo_model_path).expanduser()
+        if not model_path_resolved.is_absolute():
+            candidate = BASE_DIR / model_path_resolved
+            model_path_resolved = candidate.resolve() if candidate.exists() else (Path.cwd() / model_path_resolved).resolve()
+        self.yolo_model_path = str(model_path_resolved)
+
+        owl_weights = DEFAULT_OWL_WEIGHTS_PATH if owl_weights_path is None else Path(owl_weights_path)
+        owl_weights_resolved = owl_weights.expanduser()
+        if not owl_weights_resolved.is_absolute():
+            candidate = BASE_DIR / owl_weights_resolved
+            owl_weights_resolved = candidate.resolve() if candidate.exists() else (Path.cwd() / owl_weights_resolved).resolve()
+        self.owl_weights_path = str(owl_weights_resolved)
+
         # Initialize OWLv2 classifier if enabled
-        if self.use_owl and os.path.exists(owl_weights_path):
+        if self.use_owl and os.path.exists(self.owl_weights_path):
             logger.info("Loading OWLv2 watermark classifier...")
             try:
                 self.owl_classifier = DetectorModelOwl("google/owlv2-base-patch16-ensemble", dropout=0.0)
-                self.owl_classifier.load_state_dict(torch.load(owl_weights_path, map_location="cpu"))
+                self.owl_classifier.load_state_dict(torch.load(self.owl_weights_path, map_location="cpu"))
                 self.owl_classifier.eval()
                 logger.info("OWLv2 classifier loaded successfully")
             except Exception as e:
@@ -102,9 +118,9 @@ class LogoDetector:
                 self.owl_classifier = None
 
         # Initialize YOLO detector
-        logger.info(f"Loading YOLO model from {yolo_model_path}...")
+        logger.info(f"Loading YOLO model from {self.yolo_model_path}...")
         try:
-            self.yolo_model = YOLO(yolo_model_path)
+            self.yolo_model = YOLO(self.yolo_model_path)
             logger.info("YOLO model loaded successfully")
         except Exception as e:
             logger.error(f"Failed to load YOLO model: {e}")

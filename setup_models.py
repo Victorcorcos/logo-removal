@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 # Model information
 DEFAULT_MODEL_URL = "https://huggingface.co/corzent/yolo11x_watermark_detection/resolve/main/best.pt"
 DEFAULT_MODEL_NAME = "best.pt"
-MODELS_DIR = "models"
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_MODELS_DIR = BASE_DIR / "models"
 
 
 def download_file(url: str, destination: str) -> bool:
@@ -81,7 +82,7 @@ def verify_model(model_path: str) -> bool:
 
 def setup_model(model_url: str = DEFAULT_MODEL_URL,
                 model_name: str = DEFAULT_MODEL_NAME,
-                models_dir: str = MODELS_DIR,
+                models_dir: str = str(DEFAULT_MODELS_DIR),
                 force: bool = False) -> bool:
     """
     Download and setup the YOLO model.
@@ -96,7 +97,9 @@ def setup_model(model_url: str = DEFAULT_MODEL_URL,
         True if successful, False otherwise
     """
     # Create models directory
-    models_path = Path(models_dir)
+    models_path = Path(models_dir).expanduser()
+    if not models_path.is_absolute():
+        models_path = (BASE_DIR / models_path).resolve()
     models_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Models directory: {models_path.absolute()}")
 
@@ -167,8 +170,8 @@ Examples:
 
     parser.add_argument(
         '--dir',
-        default=MODELS_DIR,
-        help=f'Directory to save models in (default: {MODELS_DIR})'
+        default=str(DEFAULT_MODELS_DIR),
+        help=f'Directory to save models in (default: {DEFAULT_MODELS_DIR})'
     )
 
     parser.add_argument(
