@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/qi8aWgN.jpeg" alt="Hierarchy Tree Logo" width="300" height="300"/>
+  <img src="https://i.imgur.com/vVl8U0q.png" alt="Hierarchy Tree Logo" width="300" height="300"/>
 </p>
 
 Automatically detect and remove artist watermarks/logos from images using AI-based object detection and inpainting. This tool provides a completely hands-free, scalable solution for batch processing images.
