@@ -62,7 +62,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 Run the setup script to download the pre-trained logo detection model:
 
 ```rb
-python setup_models.py
+python scripts/setup_models.py
 ```
 
 This will download the YOLOv11 model (~250MB) to the `models/` directory.
@@ -155,8 +155,9 @@ cat log/logo_removal.log
 ```
 logo-removal/
 ├── remove_logos.py          # Main script for logo removal
-├── logo_detector.py         # Logo detection module (OWLv2 + YOLO)
-├── setup_models.py          # Script to download YOLO model
+├── scripts/                 # Auxiliary scripts and modules
+│   ├── logo_detector.py     # Logo detection module (OWLv2 + YOLO)
+│   └── setup_models.py      # Script to download YOLO model
 ├── requirements.txt         # Python dependencies
 ├── README.md                # This file
 ├── CLAUDE.md                # Project instructions for AI assistants

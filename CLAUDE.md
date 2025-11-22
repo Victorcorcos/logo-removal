@@ -31,7 +31,7 @@ This is an AI-powered logo/watermark removal tool designed specifically for batc
 ### Required Models
 1. **YOLO Detection Model** (`models/best.pt`, 110MB)
    - Source: https://huggingface.co/corzent/yolo11x_watermark_detection
-   - Downloaded via `setup_models.py`
+   - Downloaded via `scripts/setup_models.py`
 
 2. **OWLv2 Classifier** (`models/far5y1y5-8000.pt`, 342MB)
    - Source: https://huggingface.co/fancyfeast/joycaption-watermark-detection
@@ -52,25 +52,37 @@ This is an AI-powered logo/watermark removal tool designed specifically for batc
 
 ### Main Script: `remove_logos.py`
 
-**Class: `DetectorModelOwl`** (lines 25-80)
-- OWLv2-based binary watermark classifier
-- Frozen vision model + trainable classification head
-- Returns confidence score (0-1) for watermark presence
-
-**Class: `LogoRemover`** (lines 82-455)
-- `__init__`: Loads YOLO, OWLv2, sets up device
-- `detect_logos()`: Runs YOLO detection with optimized parameters
+**Class: `LogoRemover`**
+- `__init__`: Initializes LogoDetector and sets up inpainting configuration
 - `create_mask()`: Generates binary mask from bounding boxes with expansion
 - `inpaint_image()`: Calls IOPaint via subprocess
 - `process_image()`: Orchestrates OWLv2 → YOLO → Mask → Inpaint pipeline
 - `process_directory()`: Batch processing with error handling
 
+### Detection Module: `scripts/logo_detector.py`
+
+**Class: `DetectorModelOwl`**
+- OWLv2-based binary watermark classifier
+- Frozen vision model + trainable classification head
+- Returns confidence score (0-1) for watermark presence
+
+**Class: `LogoDetector`**
+- `__init__`: Loads YOLO and OWLv2 models, sets up device
+- `has_watermark_owl()`: Binary watermark classification using OWLv2
+- `detect()`: Runs YOLO detection with optional multi-angle support
+- `_detect_at_angle()`: Detects logos at specific rotation angle
+- `_nms_boxes()`: Non-Maximum Suppression to filter duplicate detections
+
+### Setup Script: `scripts/setup_models.py`
+
+Utility script to download the YOLO model from Hugging Face.
+
 ### Important Code Patterns
 
-**Detection Parameters** (line 142-147):
+**YOLO Detection Parameters** (in `scripts/logo_detector.py`):
 ```python
-results = self.model(
-    image_path,
+results = self.yolo_model.predict(
+    source=image_path,
     conf=self.confidence_threshold,
     imgsz=1024,      # Critical for anime images
     augment=True,    # Better detection quality
@@ -79,7 +91,7 @@ results = self.model(
 )
 ```
 
-**IOPaint Subprocess Call** (lines 274-286):
+**IOPaint Subprocess Call** (in `remove_logos.py`):
 ```python
 cmd = [
     'iopaint', 'run',
@@ -92,7 +104,7 @@ cmd = [
 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 ```
 
-**Output Path Handling** (line 289):
+**Output Path Handling**:
 ```python
 # IOPaint creates subdirectory and uses input filename
 result_image_path = os.path.join(tmp_output_dir, 'input.png')
@@ -106,9 +118,9 @@ result_image_path = os.path.join(tmp_output_dir, 'input.png')
 - Compare outputs visually - inpainting quality is subjective
 
 ### Adding Features
-1. **Detection improvements**: Modify YOLO parameters in `detect_logos()` method
-2. **New inpainting models**: Add to IOPaint `--model` choices and update CLI args
-3. **Post-processing**: Add between inpainting and final save in `process_image()`
+1. **Detection improvements**: Modify YOLO parameters in `scripts/logo_detector.py` `detect()` method
+2. **New inpainting models**: Add to IOPaint `--model` choices and update CLI args in `remove_logos.py`
+3. **Post-processing**: Add between inpainting and final save in `process_image()` in `remove_logos.py`
 
 ### Common Modifications
 
@@ -118,12 +130,11 @@ result_image_path = os.path.join(tmp_output_dir, 'input.png')
 - Modify `iou` parameter for overlapping logo handling
 
 **Changing Default Model**:
-- Edit line 94: `inpaint_model: str = 'mat'` to `'lama'`
-- Or update CLI default at line 512: `default='mat'`
+- Edit `remove_logos.py` CLI argument default: `default='mat'` to `'lama'`
 
 **Adding Logging**:
 - Use existing logger: `logger.debug()`, `logger.info()`, `logger.warning()`, `logger.error()`
-- Configured at line 20-21 with file handler
+- Configured in both `remove_logos.py` and `scripts/logo_detector.py` with file handler
 
 ### Known Limitations
 
@@ -177,7 +188,7 @@ This repository is synced to Google Drive via rclone bisync (every 10 minutes). 
 ### Committing Changes
 - Avoid committing `venv/`, `pictures/cleaned/`, `*.log`, `__pycache__/` (already in `.gitignore`)
 - Model files in `models/` should be committed (tracked for reproducibility)
-- Always test before committing changes to `remove_logos.py`
+- Always test before committing changes to `remove_logos.py` or `scripts/logo_detector.py`
 
 ## Future Improvements
 

@@ -17,7 +17,7 @@ import numpy as np
 from PIL import Image
 import torch
 
-from logo_detector import LogoDetector
+from scripts.logo_detector import LogoDetector
 
 # Base paths (script-location aware)
 BASE_DIR = Path(__file__).resolve().parent
