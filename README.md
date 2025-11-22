@@ -4,7 +4,7 @@
 
 Automatically detect and remove artist watermarks/logos from images using AI-based object detection and inpainting. This tool provides a completely hands-free, scalable solution for batch processing images.
 
-## ✨ Features
+## 🎁 Features
 
 - **Automatic Detection**: Uses YOLOv11 to automatically locate logos/watermarks on images
 - **AI-Powered Removal**: Uses IOPaint with MAT or LaMa models for seamless logo removal
@@ -14,47 +14,6 @@ Automatically detect and remove artist watermarks/logos from images using AI-bas
 - **Offline & Free**: Uses open-source models, no API keys or internet required (after setup)
 - **Smart Masking**: Automatically expands detection regions for complete logo coverage
 
-## 👣 Quick Start
-
-Get up and running in 5 minutes!
-
-### Step 1: Install Python Dependencies
-
-```rb
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Linux/macOS
-
-# Install packages
-pip install -r requirements.txt
-```
-
-### Step 2: Download the Model
-
-```rb
-python setup_models.py
-```
-
-This downloads the YOLOv11 model (~250MB) for logo detection.
-
-### Step 3: Process Your Images
-
-```rb
-python remove_logos.py -i /path/to/your/images
-```
-
-That's it! Your processed images will be in `/path/to/your/images/cleaned/`
-
-**Common options:**
-- Use verbose mode: `python remove_logos.py -i /path/to/images -v`
-- Use LaMa model instead of MAT: `python remove_logos.py -i /path/to/images --inpaint-model lama`
-- Lower confidence for more detections: `python remove_logos.py -i /path/to/images -c 0.15`
-- Increase mask expansion: `python remove_logos.py -i /path/to/images -e 25`
-
-For detailed instructions, see the sections below.
-
----
-
 ## 🛠️ Prerequisites
 
 - **Operating System**: Linux (tested on Linux Mint), macOS, or Windows
@@ -63,43 +22,38 @@ For detailed instructions, see the sections below.
 - **Memory**: Minimum 4GB RAM (8GB+ recommended)
 - **GPU** (Optional): NVIDIA GPU with CUDA support for faster processing
 
-## 🎛️ Setup
+## 👣 Setup
 
 ### 1. Clone or Download This Repository
 
 ```rb
-cd /path/to/your/projects
-git clone <repository-url>
+cd /path/to/your/repositories
+git clone git@github.com:Victorcorcos/logo-removal.git
 cd logo-removal
 ```
 
 Or simply download and extract the files to a folder.
 
-### 2. Create a Virtual Environment (Recommended)
+### 2. Create a Virtual Environment & Activate it (Recommended)
 
 ```rb
-# Create virtual environment
 python3 -m venv venv
 
-# Activate it
-source venv/bin/activate  # On Linux/macOS
-# or
-venv\Scripts\activate  # On Windows
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
 ```
 
 ### 3. Install Dependencies
 
 ```rb
-# Install required packages
 pip install -r requirements.txt
 ```
 
 **For GPU Support (NVIDIA CUDA):**
 
-If you have an NVIDIA GPU and want faster processing:
+If you have an NVIDIA GPU and want faster processing → PyTorch with CUDA support:
 
 ```rb
-# Install PyTorch with CUDA support (adjust cu118 to your CUDA version)
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 ```
 
@@ -124,7 +78,7 @@ If the script fails, you can manually download the model:
 
 ## 🚀 Usage
 
-### Basic Usage
+### Basic
 
 Process all images in a folder:
 
@@ -137,9 +91,12 @@ This will:
 - Detect and remove logos from each image
 - Save results to `/path/to/images/with/logos/cleaned/`
 
-### Advanced Options
+### Advanced
 
 ```rb
+# Enable verbose logging
+python remove_logos.py -i /path/to/images -v
+
 # Specify custom output directory
 python remove_logos.py -i /path/to/input -o /path/to/output
 
@@ -162,12 +119,9 @@ python remove_logos.py -i /path/to/images --inpaint-model lama
 
 # Force CPU usage (disable GPU)
 python remove_logos.py -i /path/to/images -d cpu
-
-# Enable verbose logging
-python remove_logos.py -i /path/to/images -v
 ```
 
-### Command-Line Arguments
+### Arguments
 
 | Argument | Short | Description | Default |
 |----------|-------|-------------|---------|
@@ -180,7 +134,7 @@ python remove_logos.py -i /path/to/images -v
 | `--inpaint-model` | - | Inpainting model (mat/lama) | `mat` |
 | `--verbose` | `-v` | Enable verbose logging | `False` |
 
-### Example Workflow
+### Workflow
 
 ```rb
 # 1. Activate virtual environment
@@ -201,15 +155,24 @@ cat log/logo_removal.log
 ```
 logo-removal/
 ├── remove_logos.py          # Main script for logo removal
+├── logo_detector.py         # Logo detection module (OWLv2 + YOLO)
 ├── setup_models.py          # Script to download YOLO model
 ├── requirements.txt         # Python dependencies
 ├── README.md                # This file
+├── CLAUDE.md                # Project instructions for AI assistants
+├── LICENSE                  # License information
+├── .gitignore               # Git ignore rules
+├── examples/                # Example usage scripts
+│   └── example_usage.sh     # Sample commands and workflows
 ├── models/                  # Model files (created by setup_models.py)
-│   └── best.pt
-└── log/logo_removal.log     # Processing log (created when script runs)
+│   ├── best.pt              # YOLO detection model (~110MB)
+│   └── far5y1y5-8000.pt     # OWLv2 classifier (~342MB, auto-downloaded)
+├── pictures/                # Test images (optional, for testing)
+└── log/                     # Logs directory (created when script runs)
+    └── logo_removal.log     # Processing log
 ```
 
-## 🔧 How It Works
+## 🤔 How It Works
 
 1. **Detection Phase**
    - YOLOv11 scans each image to locate logos/watermarks
@@ -281,36 +244,11 @@ logo-removal/
   - The logo doesn't cover critical details
   - The surrounding context provides clear patterns to continue
 
-## 📊 Example Results
-
-**Before Processing:**
-- Image with logo in corner
-- Watermark text overlay
-
-**After Processing:**
-- Clean image with logo seamlessly removed
-- Background/artwork continued naturally
-
 ## 🔒 Privacy & Security
 
 - **Fully Offline**: After initial model download, no internet required
 - **No Telemetry**: No data is sent anywhere
 - **Local Processing**: All processing happens on your machine
-
-## 📝 Logging
-
-The script creates `log/logo_removal.log` with detailed information:
-- Which images were processed
-- Number of logos detected per image
-- Any errors or warnings
-- Processing statistics
-
-View the log:
-```rb
-cat log/logo_removal.log
-# or
-tail -f log/logo_removal.log  # Follow in real-time
-```
 
 ## 🎭 Contributing
 
@@ -382,8 +320,6 @@ For questions, issues, or suggestions:
 2. Review the troubleshooting section
 3. Check the log file for errors
 4. Open an issue with detailed information
-
----
 
 **Happy Logo Removing!** 🎨✨
 
